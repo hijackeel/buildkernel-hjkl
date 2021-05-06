@@ -1,4 +1,4 @@
-.TH BUILDKERNEL 8 "Version 1.0.37: July 2020"
+.TH BUILDKERNEL 8 "hijackeel's fork: Version 1: May 2021"
 .SH NAME
 buildkernel \- build secure boot kernel, save to EFI system partition
 .SH SYNOPSIS
@@ -14,17 +14,9 @@ Specifically, the assumed use-case for \fBbuildkernel\fR is where you are creati
 for use in a dual-factor-authenticated LVM-over-LUKS system, booting from an
 external USB key, with secure boot enabled (using UEFI), where you
 may (optionally) wish to use the \fBplymouth\fR(8) splash manager, and where
-the target (final) init system is  \fBsystemd\fR(1).
-(As of version 1.0.11, \fBOpenRC\fR(8) is also supported as a target
-init system.)
+the target (final) init system is  \fBsystemd\fR(1) or \fBOpenRC\fR(8).
 
-To facilitate this, \fBbuildkernel\fR will create a statically linked version
-of \fBgpg\fR(1) \(em one which furthermore does not require \fBpinentry\fR \(em
-and include this in the initramfs (unless \fBLUKSKEYFILE\fR is
-left blank in \fI/etc/buildkernel.conf\fR: see \fBbuildkernel.conf\fR(5)
-for details).
-
-It will also automatically set the necessary kernel configuration parameters,
+\fBbuildkernel\fR will automatically set the necessary kernel configuration parameters,
 including the command line, sign the resulting kernel if possible,
 then update the EFI boot list if required.
 
@@ -65,11 +57,11 @@ builds the kernel, and its modules, with the specified configuration; in this fi
 .IP \(bu 2
 builds any external modules (such as those required for VirtualBox), using \fBemerge @module-rebuild\fR, if you so specify (using the option \fB--rebuild-external-modules\fR), and optionally signs them (if you have set up the variables \fBKERNEL_SIGNING_CERT\fR and \fBKERNEL_SIGNING_KEY\fR in \fI/etc/buildkernel.conf\fR);
 .IP \(bu 2
-creates a first cut of the initramfs using \fBgenkernel\fR(8) (see below for more details); this will contain \fBgenkernel\fR(8)'s \fBinit\fR(8) script, compiled modules, any necessary firmware (if you haven't deblobbed), and a minimal set of binaries; it does \fInot\fR at this point contain a static copy of \fBgpg\fR;
+creates a first cut of the initramfs using \fBgenkernel\fR(8) (see below for more details); this will contain \fBgenkernel\fR(8)'s \fBinit\fR(8) script, compiled modules, any necessary firmware (if you haven't deblobbed), and a minimal set of binaries;
 .IP \(bu 2
 unpacks the initramfs, to the \fI/boot/initramfs\fR directory;
 .IP \(bu 2
-modifies the initramfs by copying the \fI/etc/modprobe.d\fR directory contents across to it, and the static v1.x \fBgpg\fR(1) binary mentioned earlier (if this does not already exist, \fBbuildkernel\fR will create it);
+modifies the initramfs by copying the \fI/etc/modprobe.d\fR directory contents across to it;
 .IP \(bu 2
 calls your user hook function \fBuser_modify_initramfs\fR if you have defined it in \fI/etc/genkernel.conf\fR (you don't need it to make the boot work);
 .IP \(bu 2
@@ -259,7 +251,8 @@ This is free software, you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.
 .fi
 .SH AUTHORS
-sakaki \(em send bug reports or comments to <sakaki@deciban.com>
+hijackeel \(em send bug reports or comments to <hijackeel@posteo.net>
+sakaki \(em 31 Oct 2020: due to legal obligations arising from a recent change in 'real world' job, email requests for support will have to be politely declined.
 .SH "SEE ALSO"
 .BR emerge (1),
 .BR gpg (1),

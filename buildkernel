@@ -105,10 +105,6 @@ VERBOSITY=1
 PREFIXSTRING="* "
 SHOWPREFIX="${GREEN_TEXT}${PREFIXSTRING}${RESET_ATTS}"
 SHOWSUFFIX=""
-GPG1PATHFROM="/usr/bin/staticgpg"
-GPG1PATHTO="${INITRAMFSDIR}/usr/bin/gpg"
-GPGBUILDDIR="/root/tmpgpgbuild"
-TMPGPGPATH="${GPGBUILDDIR}/usr/bin/gpg"
 declare -i USINGUSBKEYFOREFI=0
 declare -i BACKUPOLDKERNEL=1
 declare -i BUILT_EXTERNAL_MODULES=1
@@ -291,7 +287,7 @@ extract_kernel_release_name() {
     # sign appended)
     # LINUXBUILDDIR must be defined and non-blank on entry
     NEWVERSION="linux-$(cd "${LINUXBUILDDIR}" && make -s kernelrelease)"
-    INITRAMFSNAME="$(echo $NEWVERSION | sed "s/linux/initramfs-genkernel-x86_64/")"
+    INITRAMFSNAME="$(echo $NEWVERSION | sed "s/linux/initramfs/").img"
     VMLINUZNAME="$(echo $NEWVERSION | sed "s/linux/vmlinuz/")"
 }
 check_gcc_config_and_reset_if_necessary() {
@@ -1877,8 +1873,6 @@ create_initramfs_using_genkernel() {
     # itself; also note, we build an uncompressed ramdisk, as the kernel
     # build process will compress it on integration into the
     # unified kernel image
-    # we suppress gpg here as we don't want to add gpg v2 which is installed,
-    # but rather our static gpg v1, which will be inserted into the initramfs
     local PLYMOUTH_OPTS=""
     if [ -n "${PLYMOUTHTHEME}" ]; then
         PLYMOUTH_OPTS="--plymouth --plymouth-theme=${PLYMOUTHTHEME}"
@@ -1891,8 +1885,11 @@ create_initramfs_using_genkernel() {
     if ((DISABLE_LVM==0)); then
         GENKERNEL_OPTS+="--lvm "
     fi
-    GENKERNEL_OPTS+="--no-gpg --udev ${POSTCLEAR_FLAG} "
-    GENKERNEL_OPTS+="--kernel-config=\"${TARGETCONFIG}\" --busybox "
+    if [ -n "${LUKSKEYFILE}" ]; then
+        GENKERNEL_OPTS+="--gpg "
+    fi
+    GENKERNEL_OPTS+="${POSTCLEAR_FLAG} "
+    GENKERNEL_OPTS+="--kernel-config=${TARGETCONFIG} --busybox "
     GENKERNEL_OPTS+="--no-compress-initramfs "
     GENKERNEL_OPTS+="${ADDITIONALGENKERNELOPTS} ${PLYMOUTH_OPTS} initramfs"
     genkernel ${GENKERNEL_OPTS}
@@ -1910,25 +1907,7 @@ unpack_initramfs() {
     fi
     (cd "${INITRAMFSDIR}"; cpio --extract --file="${UNCOMPRESSEDINITRAMFS}")
 }
-build_static_gpg() {
-    # gnupg not slotted unfortunately, so we do this instead
-    show "Building static gpg 1.x for use in initramfs..."
-    emerge ${VERBOSITYFLAG} "app-crypt/staticgpg"
-}
 modify_initramfs() {
-    if [ -n "${LUKSKEYFILE}" ]; then
-        if [ ! -x "${GPG1PATHFROM}" ]; then
-            if ((ARG_ASK==1)); then
-                continue_yn "No static gpg found, would you like to build it?"
-            else
-                show "No static gpg found, so creating one..."
-            fi
-            build_static_gpg
-        fi
-        show "Copying static gpg program into initramfs..."
-        cp ${VERBOSITYFLAG} "${GPG1PATHFROM}" "${GPG1PATHTO}"
-    fi
-
     if ((USINGMODULES==1)); then
         show "Copying contents of ${MODPROBEDIR} directory into initramfs..."
         if [ "$(ls -A ${MODPROBEDIR})" ]; then
@@ -2335,7 +2314,7 @@ if ((ARG_COPYFROMSTAGING==0)); then
     rebuild_external_modules_if_necessary
     create_initramfs_using_genkernel
     unpack_initramfs
-    modify_initramfs            # make sure our static gpg is in there!
+    modify_initramfs
     repack_initramfs
     kernel_build_pass_2         # with real initramfs
     sign_kernel_if_possible     # if key/certificate available, for secure boot

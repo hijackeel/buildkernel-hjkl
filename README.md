@@ -3,8 +3,7 @@ A tool to build a secure-boot EFI stub kernel, and save it to the EFI system par
 
 Originally written by sakaki to work with genkernel-next, a fork of genkernel.
 genkernel-next was removed from the Gentoo repository in August 2020, and sakaki stood down as maintainer of buildkernel in October 2020 (see [here](https://github.com/sakaki-/buildkernel/issues/35)).
-genkernel now has many of genkernel-next's features, excluding plymouth support, for which FlyingWaffle has written a [patch](https://bugs.gentoo.org/753617).
-This is hijackeel's fork of buildkernel, made to work with genkernel 4.1.2 + FlyingWaffle's patch for Plymouth support.
+This is hijackeel's fork of buildkernel, made to work with genkernel, which as of v4.3.7 has all of genkernel-next's features.
 
 ## Description
 **buildkernel** is a script that builds a Gentoo Linux EFI stub kernel which is suitable for booting from a USB key using UEFI (no additional bootloader required). It makes use of the initramfs creation tools (and early userspace **init**(8) script) provided by **genkernel**(8).
